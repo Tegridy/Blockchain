@@ -1,62 +1,98 @@
 package blockchain;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Blockchain {
 
-    private int id = 0;
-    private final int prefix;
-    private final Block[] blockChain = new Block[5];
-    private SerializationUtils blockChainData;
+    public static Blockchain instance = new Blockchain();
 
-    public Blockchain(int prefix) {
-        this.prefix = prefix;
-        this.blockChainData = new SerializationUtils();
-        generateBlocks();
-        printChain();
+    private int prefix;
+    private final ArrayList<Block> blockChain;
+
+    public Blockchain() {
+      this.prefix = 0;
+      this.blockChain = new ArrayList<>();
     }
 
-    public void generateBlocks() {
-        long startTime = System.nanoTime();
-        blockChain[0] = new Block(++id, "0", prefix);
-        blockChain[0].setTotalTime((System.nanoTime() - startTime) / 1_000_000_000);
-        blockChainData.saveBlock(blockChain[0]);
+//    public Blockchain getInstance(){
+//        return instance;
+//    }
 
-        for (int i = 1; i < blockChain.length; i++) {
-            startTime = System.nanoTime();
-            blockChain[i] = new Block(++id, blockChain[i-1].getHash(), prefix);
-            blockChain[i].setTotalTime((System.nanoTime() - startTime) / 1_000_000_000);
-            blockChainData.saveBlock(blockChain[i]);
+    public static Blockchain getBlockchain(String filename) {
+        if (instance != null) {
+            return instance;
         }
-    }
 
-    public boolean isValid() {
-        String prefixString = new String(new char[prefix]).replace('\0', '0');
+        File file = new File(filename);
 
-        boolean flag = true;
-        for (int i = 0; i < blockChain.length; i++) {
-            String previousHash = i == 0 ? "0" : blockChain[i - 1].getHash();
-            flag = blockChain[i].getHash().equals(blockChain[i].calculateHash(this.prefix)) // The stored hash of the current block is actually what it calculates
-                    && previousHash.equals(blockChain[i].getPrevHash()) // The hash of the previous block stored in the current block is the hash of the previous block
-                     && blockChain[i].getHash().substring(0, prefix).equals(prefixString); // The current block has been mined
-            if (!flag) break;
+        if (file.exists() && file.length() != 0) {
+            try {
+                instance = (Blockchain) SerializationUtils.deserialize(file.getName());
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            instance = new Blockchain();
         }
-        return flag;
+        return instance;
     }
 
+//    public Block getBlock(int id) {
+//        if (id < blockChain.size()) {
+//            return blockChain.get(id);
+//        }
+//        throw new IllegalArgumentException("There is no such block");
+//    }
 
-
-
-    public void printChain(){
-        for (int i = 0; i < blockChain.length; i++) {
-            System.out.println(blockChain[i].toString());
+    public synchronized Block peek() {
+        if (blockChain.isEmpty()){
+            return null;
         }
+        return blockChain.get(blockChain.size() - 1);
     }
 
-    public void loadFromFile(){
-        for (int i = 0; i < blockChain.length; i++) {
-            blockChain[i] = blockChainData.readBlock();
+    public synchronized int getPrefix() {
+        return prefix;
+    }
+
+    public synchronized void getMsgFromClient(String msg){
+
+    }
+
+
+    public synchronized boolean put(Block newBlock, String miner) {
+        String prevHash = blockChain.isEmpty() ? "0" : blockChain.get(blockChain.size() - 1).getHash();
+
+        if (prevHash.equals(newBlock.getPrevHash())) {
+            blockChain.add(newBlock);
+            System.out.println("Block:");
+            System.out.println("Created by miner # " + miner);
+            System.out.print(newBlock);
+            if (newBlock.getTotalTime() / 1000 < 60) {
+                System.out.println("Current N: " + prefix++ + " was increased by 1\n");
+            } else {
+                System.out.println("Current N: " + prefix-- + " was decreased by 1\n");
+            }
+            return true;
         }
+        return false;
     }
 
+    public int getSize() {
+        return blockChain.size();
+    }
 
-
+//    public boolean validate() {
+//        for (int i = 1; i < blockChain.size(); i++) {
+//            if (Objects.equals(blockChain.get(i).getPrevHash(), blockChain.get(i - 1).getHash())) {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 }

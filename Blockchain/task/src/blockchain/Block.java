@@ -6,28 +6,41 @@ import java.util.Date;
 
 public class Block implements Serializable{
 
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private long timestamp;
     private String prevHash;
     private String hash;
+    private String data;
     private int seed;
 
     private long totalTime;
 
+    private boolean mined;
 
-    public Block(int id, String prevHash, int prefix) {
-        this.id = id;
-        this.timestamp = new Date().getTime();
-        this.hash = calculateHash(prefix);
-        this.prevHash = prevHash;
+    public static Block getInstance(Block prev, int prefix){
+        return new Block(prev, prefix);
     }
 
-    public Block() {
+
+    public Block(Block prev, int prefix) {
+        this.timestamp = new Date().getTime();
+        if(prev == null){
+            this.id = 1;
+            this.prevHash = "0";
+        } else {
+            this.id = prev.getId() + 1;
+            this.prevHash = prev.getHash();
+        }
+        this.hash = mineBlock(prefix);
+        this.data = "Block data: \n";
+        totalTime = new Date().getTime() - timestamp;
     }
 
     @Override
     public String toString() {
-        return "Block: \n" +
+        return
                 "Id: " + id + "\n" +
                 "Timestamp: " + timestamp + "\n" +
                 "Magic number: " + seed + "\n" +
@@ -36,6 +49,29 @@ public class Block implements Serializable{
                 "Block was generating for " + totalTime + " seconds \n";
     }
 
+    public String mineBlock(int prefix) {
+        mined = false;
+        String prefixString = "0".repeat(prefix);
+        String hash = "";
+        while (mined) {
+            do {
+                seed++;
+                hash = new StringUtil().applySha256(this.toString());
+            } while (!hash.substring(0, prefix).equals(prefixString));
+            mined = true;
+        }
+        return hash;
+    }
+
+    public synchronized void reciveMsg(String msg){
+        // TODO
+        // Add StringBuilder
+        if(id > 1){
+            this.data += msg;
+        } else {
+            this.data += "no messages";
+        }
+    }
 
     public String getHash() {
         return hash;
@@ -45,49 +81,20 @@ public class Block implements Serializable{
         return prevHash;
     }
 
-    public String calculateHash(int prefix){
-        String hash = new StringUtil().applySha256(this.toString());
-
-        return mineBlock(prefix, hash);
+    public long getTotalTime() {
+        return totalTime;
     }
 
-    public String mineBlock(int prefix, String hash) {
-        String prefixString = new String(new char[prefix]).replace('\0', '0');
-        while (!hash.substring(0, prefix).equals(prefixString)) {
-            seed++;
-            hash = new StringUtil().applySha256(this.toString());
-        }
-        return hash;
+    public int getId() {
+        return id;
     }
 
-
-    public long getTimestamp() {
-        return timestamp;
+    public String getData() {
+        return data;
     }
 
-
-    class StringUtil {
-        /* Applies Sha256 to a string and returns a hash. */
-        public String applySha256(String input) {
-            try {
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                /* Applies sha256 to our input */
-                byte[] hash = digest.digest(input.getBytes("UTF-8"));
-                StringBuilder hexString = new StringBuilder();
-                for (byte elem : hash) {
-                    String hex = Integer.toHexString(0xff & elem);
-                    if (hex.length() == 1) hexString.append('0');
-                    hexString.append(hex);
-                }
-                return hexString.toString();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public void setTotalTime(long totalTime) {
-        this.totalTime = totalTime;
+    public void setData(String data) {
+        this.data = data;
     }
 }
 

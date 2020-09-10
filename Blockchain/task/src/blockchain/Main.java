@@ -1,18 +1,38 @@
 package blockchain;
 
+import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
 
     private static Scanner scanner = new Scanner(System.in);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
+        ExecutorService executorMiner = Executors.newFixedThreadPool(4);
+        String filename = "";
 
-        System.out.print("Enter how many zeros the hash must start with: ");
+        Blockchain blockchain = Blockchain.getBlockchain(filename);
+        int size = blockchain.getSize();
 
-        int chainLen = Integer.parseInt(scanner.nextLine());
+        while (true) {
+            executorMiner.submit(new Miner(blockchain));
+            Thread.sleep(1000);
+            if (blockchain.getSize() - size >= 5) {
+                executorMiner.shutdownNow();
+                break;
+            }
+        }
 
-        Blockchain blockchain = new Blockchain(chainLen);
+        if (!"".equals(filename)) {
+            try {
+                SerializationUtils.serialize(blockchain, filename);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
+
 }
