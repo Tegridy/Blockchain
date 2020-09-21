@@ -18,7 +18,8 @@ public class Main {
         int size = blockchain.getSize();
 
         while (true) {
-            executorMiner.submit(new Miner(blockchain));
+            Miner miner = new Miner(blockchain);
+            executorMiner.submit(miner);
             Thread.sleep(1000);
             if (blockchain.getSize() - size >= 5) {
                 executorMiner.shutdownNow();

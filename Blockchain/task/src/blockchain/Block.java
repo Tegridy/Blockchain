@@ -2,7 +2,9 @@ package blockchain;
 
 import java.io.*;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Block implements Serializable{
 
@@ -12,19 +14,18 @@ public class Block implements Serializable{
     private long timestamp;
     private String prevHash;
     private String hash;
-    private String data;
+    private List<String> data;
     private int seed;
 
     private long totalTime;
 
-    private boolean mined;
 
     public static Block getInstance(Block prev, int prefix){
         return new Block(prev, prefix);
     }
 
 
-    public Block(Block prev, int prefix) {
+    private Block(Block prev, int prefix) {
         this.timestamp = new Date().getTime();
         if(prev == null){
             this.id = 1;
@@ -34,8 +35,12 @@ public class Block implements Serializable{
             this.prevHash = prev.getHash();
         }
         this.hash = mineBlock(prefix);
-        this.data = "Block data: \n";
-        totalTime = new Date().getTime() - timestamp;
+        data = new ArrayList<>();
+        totalTime = (new Date().getTime() - timestamp) / 1000;
+    }
+
+    public void addChat(ArrayList<String> chat) {
+        this.data = (ArrayList<String>) chat.clone();
     }
 
     @Override
@@ -46,32 +51,20 @@ public class Block implements Serializable{
                 "Magic number: " + seed + "\n" +
                 "Hash of the previous block: \n" + prevHash + "\n" +
                 "Hash of the block: \n" + hash + "\n" +
+                        "Block data: \n"  + viewChat() +
                 "Block was generating for " + totalTime + " seconds \n";
     }
 
     public String mineBlock(int prefix) {
-        mined = false;
         String prefixString = "0".repeat(prefix);
         String hash = "";
-        while (mined) {
-            do {
+        do {
                 seed++;
                 hash = new StringUtil().applySha256(this.toString());
             } while (!hash.substring(0, prefix).equals(prefixString));
-            mined = true;
-        }
         return hash;
     }
 
-    public synchronized void reciveMsg(String msg){
-        // TODO
-        // Add StringBuilder
-        if(id > 1){
-            this.data += msg;
-        } else {
-            this.data += "no messages";
-        }
-    }
 
     public String getHash() {
         return hash;
@@ -89,12 +82,18 @@ public class Block implements Serializable{
         return id;
     }
 
-    public String getData() {
+    public List<String> getData() {
         return data;
     }
 
-    public void setData(String data) {
-        this.data = data;
+    public String viewChat(){
+        if (data == null) return "no messages";
+        StringBuilder sb = new StringBuilder();
+        for (String s : data) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
     }
+
 }
 

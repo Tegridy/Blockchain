@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Blockchain {
@@ -13,6 +14,8 @@ public class Blockchain {
 
     private int prefix;
     private final ArrayList<Block> blockChain;
+
+    private ArrayList<String> msg;
 
     public Blockchain() {
       this.prefix = 0;
@@ -56,19 +59,22 @@ public class Blockchain {
         return blockChain.get(blockChain.size() - 1);
     }
 
+    public synchronized void receiveMsg(String m){
+        if(msg == null) {
+            msg = new ArrayList<>();
+        }
+        msg.add(m);
+    }
+
     public synchronized int getPrefix() {
         return prefix;
     }
-
-    public synchronized void getMsgFromClient(String msg){
-
-    }
-
 
     public synchronized boolean put(Block newBlock, String miner) {
         String prevHash = blockChain.isEmpty() ? "0" : blockChain.get(blockChain.size() - 1).getHash();
 
         if (prevHash.equals(newBlock.getPrevHash())) {
+            newBlock.addChat(msg);
             blockChain.add(newBlock);
             System.out.println("Block:");
             System.out.println("Created by miner # " + miner);

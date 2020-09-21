@@ -1,5 +1,7 @@
 package blockchain;
 
+import java.util.Optional;
+
 public class Miner implements Runnable {
 
     private final Blockchain blockchain;
@@ -22,6 +24,8 @@ public class Miner implements Runnable {
     public void run() {
         String[] s = Thread.currentThread().getName().split("-");
         this.miner = s[s.length - 1];
+        blockchain.receiveMsg("test msg");
         generateBlock();
     }
+
 }
