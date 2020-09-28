@@ -1,0 +1,12 @@
+build.gradle
+course-info.yaml
+course-remote-info.yaml
+gradlew
+gradlew.bat
+settings.gradle
+.gradle/
+.idea/
+gradle/
+blockchain.dat
+Blockchain/*
+!Blockchain/task/

@@ -4,7 +4,7 @@ import java.security.MessageDigest;
 
 class StringUtil {
     /* Applies Sha256 to a string and returns a hash. */
-    public String applySha256(String input) {
+    public static String applySha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             /* Applies sha256 to our input */
